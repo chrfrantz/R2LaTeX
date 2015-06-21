@@ -1,8 +1,13 @@
 # R2LaTeX - Utility file for constructing LaTeX output for R dataframes or matrices 
 # for direct insertion into LaTeX documents. 
 #
-# Dependency: stringr library
+# Dependency: stringr library (you will be prompted during execution if not installed)
 # 
+# Usage: 
+# - Copy this file into your R work directory.
+# - Run source("LatexPrinting.R")
+# - Use the printLatexTable() functions (see examples)
+#
 # Author: Christopher Frantz
 # Version 0.01 - June 2015
 ###############################################################################
