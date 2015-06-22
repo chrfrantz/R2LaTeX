@@ -99,14 +99,16 @@ containsText <- function(val){
 #' @param printColumnHeaders = TRUE Adds column headers to output. Uses colnames of input data frame
 #' @param printRowHeaders = FALSE Adds row headers to output. Uses rownames of input data frame.
 #' @param printColumnSeparators = FALSE Indicates if columns should be separated by '|'
-#' @param printRowSeparators = FALSE Indicates if rows should be separated by '\hline'
+#' @param printRowSeparators = FALSE Indicates if rows should be separated by '\hline' or '\midrule'/'\cmidrule'. Consider using the compatibilityMode if relying on row separators.
+#' @param spanRowSeparatorsAcrossAllColumns = FALSE Indicates if row separators (for actual table data entries) are spanned across all columns (using \hline) or only over data columns (using cmidrule). Use with care, since it can cause ugly results. Depends on printRowSeparators.
 #' @param nonSeparatedColumnHeaders = TRUE Does not print separators between column headers even if activated for columns.
-#' @param separateColumnHeadersFromData = FALSE Indicates if separators should be printed between headers and data (both for row and column headers).
-#' @param separateRowHeadersFromData = FALSE Indicates whether row headers should be separated from data (not recommended since it produces discontinued lines with horizontal separation enabled.
+#' @param separateColumnHeadersFromData = FALSE Indicates if separators should be printed between headers and data (both for row and column headers). Depends on separateColumnHeadersFromData.
+#' @param spanDataHeaderSeparatorAcrossAllColumns = FALSE If set to true, uses toprule that spans across all columns including columns containing row headers and row label
+#' @param separateRowHeadersFromData = FALSE Indicates whether row headers should be separated from data (not recommended since it produces discontinued lines with horizontal separation enabled. Caution: Produces interrupted lines if used with printRowSeparators. You can use \setlength{\extrarowheight}{1pt} from the LaTeX package 'array' to fix that in your preamble.
 #' @param boldColumnHeaders = TRUE Plots the column headers in bold face.
-#' @param boldColumnAndRowLabel = TRUE Plots the spanning columnLabel and rowLabel in bold face.
 #' @param columnLabel = NA Column label that spans across all columns (in addition to column headers).
 #' @param rowLabel = NA Row label that spans across all rows (in addition to row headers).
+#' @param boldColumnAndRowLabel = TRUE Plots the spanning columnLabel and rowLabel in bold face.
 #' @param roundToDecimalPlaces = 3 Decimal places values should be rounded to if numeric (and used for automated decimal point-centered column formatting).
 #' @param fixedLeadingDecimalPlaces = NA Fixes leading decimal places (i.e. before the decimal point) to fixed length for the purpose of automated decimal place-centered column formatting. By default automatically determined from data.
 #' @param determineLeadingDecimalPlacesPerColumn = TRUE Determines leading decimal places for centered formatting per numeric column (instead of global value)
@@ -116,6 +118,7 @@ containsText <- function(val){
 #' @param writeFullTableEnv = TRUE Writes complete table environment for immediate paste into LaTeX, otherwise only tabular environment.
 #' @param caption = "Generated Table" Caption for generated table. Requires activation of writeFullTableEnv.
 #' @param label = "tab:generatedTable" LaTeX ref label for generated table. Requires activation of writeFullTableEnv. 
+#' @param compatibilityMode = FALSE Overrides use of features that require additional LaTeX packages (especially data column formatting and separators). Use not recommended, but good for quick output.
 #' 
 #' 
 #' @example 
@@ -128,10 +131,10 @@ containsText <- function(val){
 #' #More complex example:
 #' 
 #' attach(mtcars)
-#' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars")
+#' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars")
 #' 
 #' 
-printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", printColumnHeaders = TRUE, printRowHeaders = FALSE, printColumnSeparators = FALSE, printRowSeparators = FALSE, nonSeparatedColumnHeaders = TRUE, separateColumnHeadersFromData = FALSE, separateRowHeadersFromData = FALSE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, columnLabel = NA, rowLabel = NA, roundToDecimalPlaces = 3, fixedLeadingDecimalPlaces = NA, determineLeadingDecimalPlacesPerColumn = TRUE, determineTrailingDecimalPlacesPerColumn = TRUE, rowHeaderColumnFormat = "c", dataColumnFormat = NA, writeFullTableEnv = TRUE, caption = "Generated Table", label = "tab:generatedTable"){
+printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", printColumnHeaders = TRUE, printRowHeaders = FALSE, printColumnSeparators = FALSE, printRowSeparators = FALSE, spanRowSeparatorsAcrossAllColumns = FALSE, nonSeparatedColumnHeaders = TRUE, separateColumnHeadersFromData = FALSE, spanDataHeaderSeparatorAcrossAllColumns = FALSE, separateRowHeadersFromData = FALSE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, columnLabel = NA, rowLabel = NA, roundToDecimalPlaces = 3, fixedLeadingDecimalPlaces = NA, determineLeadingDecimalPlacesPerColumn = TRUE, determineTrailingDecimalPlacesPerColumn = TRUE, rowHeaderColumnFormat = "c", dataColumnFormat = NA, writeFullTableEnv = TRUE, caption = "Generated Table", label = "tab:generatedTable", compatibilityMode = FALSE){
 	
 	if(is.null(dataToPrint)) {
 		stop("Passed data is null.")
@@ -140,6 +143,40 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		if(length(row(dataToPrint)) == 0) {
 			stop("Passed dataframe or matrix does not have entries.")
 		}
+	}
+	
+	#Explicitly declare default data column
+	defaultDataColumn = NA
+	
+	#Override format choice if provided by user
+	if(!is.na(dataColumnFormat)) {
+		defaultDataColumn = dataColumnFormat
+	}
+	
+	colSep = " & "
+	rowSep = " \\\\"
+	line = paste("\\", "midrule", sep="")
+	toprule = "toprule"
+	bottomrule = "bottomrule"
+	cmidrule = "cmidrule"
+	
+	
+	#Handles compatibility issues
+	if(compatibilityMode) {
+		#Prevents use of booktabs package features
+		spanDataHeaderSeparatorAcrossAllColumns = FALSE
+		line = paste("\\", "hline", sep="")
+		toprule = "hline"
+		bottomrule = "hline"
+		cmidrule = "cline"
+		
+		#Prevents use of siunitx package features
+		#set column format to default to override automatic identification
+		if(is.na(dataColumnFormat)) {
+			defaultDataColumn = "c"
+		}
+		determineLeadingDecimalPlacesPerColumn = FALSE
+		determineTrailingDecimalPlacesPerColumn = FALSE
 	}
 	
 	#Formatting-related stuff
@@ -154,28 +191,26 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	#Test which columns hold numbers in order to figure out if it makes sense to perform decimal place-based centering
 	colsWithNumbers <- apply(dataToPrint, 2, function(x){!containsText(x)})
 
-	#print(colsWithNumbers)
-	if(length(colsWithNumbers) == 0) {
-		#Alignment only works for numeric columns
-		defaultDataColumn = "c"
-		print("No numeric columns")
-	} else {
-		#Automatically determine length of decimal places
-
-		#combine values of different columns
-		vec <- vector(length=0)
-		for(i in 1:length(colsWithNumbers)) {
-			if(colsWithNumbers[i] != FALSE){
-				vec <- c(vec, dataToPrint[,i], recursive = TRUE)
+	if(is.na(defaultDataColumn)) {
+		#Only determine format if no default specified
+		if(length(colsWithNumbers) == 0) {
+			#Alignment only works for numeric columns
+			defaultDataColumn = "c"
+			print("No numeric columns")
+		} else {
+			#Automatically determine length of decimal places
+	
+			#combine values of different columns
+			vec <- vector(length=0)
+			for(i in 1:length(colsWithNumbers)) {
+				if(colsWithNumbers[i] != FALSE){
+					vec <- c(vec, dataToPrint[,i], recursive = TRUE)
+				}
 			}
-		}
-		#ignore NAs
-		vec <- vec[!is.na(vec)]	
-		#Determine column format
-		defaultDataColumn = determineFormat(vec, determineTrailingDecimalPlacesPerColumn, decimalPlaces, !is.na(fixedLeadingDecimalPlaces), fixedLeadingDecimalPlaces)
-		#Override with user settings if applicable
-		if(!is.na(dataColumnFormat)) {
-			defaultDataColumn = dataColumnFormat
+			#ignore NAs
+			vec <- vec[!is.na(vec)]	
+			#Determine column format
+			defaultDataColumn = determineFormat(vec, determineTrailingDecimalPlacesPerColumn, decimalPlaces, !is.na(fixedLeadingDecimalPlaces), fixedLeadingDecimalPlaces)
 		}
 	}
 	
@@ -183,10 +218,6 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	if(!is.na(rowHeaderColumnFormat)) {
 		defaultRowHeaderColumn = rowHeaderColumnFormat
 	}
-	
-	colSep = " & "
-	rowSep = " \\\\"
-	line = paste("\\", "hline", sep="")
 	
 	#Determine dimensions - check for colnames, which may consider columns appended after initialisation
 	rowLength = length(dataToPrint[,1])
@@ -207,6 +238,13 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		strVec = c(strVec, paste("\\label{", label, "}", sep=""))
 		strVec = c(strVec, paste("\\centering", sep=""))
 	}
+	
+	#Reduce space between rows if printing vertical and horizontal separators if not in compatibility mode
+	if(!compatibilityMode & (separateRowHeadersFromData | printColumnSeparators) & printRowSeparators) {
+		strVec = c(strVec, "\\belowrulesep=0pt")
+		strVec = c(strVec, "\\aboverulesep=0pt")
+	}
+	
 	#Writing table column specifications
 	strVec = c(strVec, "\\begin{tabular}{")
 	if(printColumnSeparators) {
@@ -254,9 +292,9 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		}
 	}
 	strVec[length(strVec)] <- paste(strVec[length(strVec)], "}", sep="")
-	if(printRowSeparators) {
-		strVec = c(strVec, line)
-	}
+#	if(printRowSeparators) {
+#		strVec = c(strVec, line)
+#	}
 	
 	strVec = c(strVec, "")
 	
@@ -288,8 +326,20 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		
 		#Print toprule if data is to be separated from headers
 		if(separateColumnHeadersFromData) {
-			strVec = c(strVec, "")
-			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\toprule", sep="")
+			if(spanDataHeaderSeparatorAcrossAllColumns) {
+				#uses toprule for separation of headers from data - requires booktabs package in LaTeX
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", toprule, sep="")
+			} else {
+				#Determining data columns and manually spanning cmidrule
+				add = 1
+				if(!is.na(rowLabel)){
+					add = add + 1
+				}
+				if(printRowHeaders){
+					add = add + 1
+				}
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+			}
 			strVec = c(strVec, "")
 		}
 		
@@ -340,28 +390,56 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		
 		if(separateColumnHeadersFromData) {
 			strVec = c(strVec, "")
-			#now uses toprule for separation of headers from data - requires booktabs package in LaTeX
-			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\toprule", sep="")
-#Legacy: determining columns and manually spanning cmidrule - now replaced by toprule
-#			add = 1
-#			if(!is.na(rowLabel)){
-#				add = add + 1
-#			}
-#			if(printRowHeaders){
-#				add = add + 1
-#			}
-			#strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\cmidrule{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+			if(spanDataHeaderSeparatorAcrossAllColumns) {
+				#uses toprule for separation of headers from data - requires booktabs package in LaTeX
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", toprule, sep="")
+			} else {
+				#Determining data columns and manually spanning cmidrule
+				add = 1
+				if(!is.na(rowLabel)){
+					add = add + 1
+				}
+				if(printRowHeaders){
+					add = add + 1
+				}
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+			}
 		}
 		
+		if(printRowSeparators & !separateColumnHeadersFromData) {
+			if(spanRowSeparatorsAcrossAllColumns) {
+				strVec = c(strVec, line)
+			} else {
+				#Determining data columns and manually spanning cmidrule
+				add = 1
+				if(!is.na(rowLabel)){
+					add = add + 1
+				}
+				if(printRowHeaders){
+					add = add + 1
+				}
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+			}
+		}
+		strVec = c(strVec, "")
+	} else {
 		if(printRowSeparators) {
-			strVec = c(strVec, line)
+			if(spanRowSeparatorsAcrossAllColumns) {
+				strVec = c(strVec, line)
+			} else {
+				#Determining data columns and manually spanning cmidrule
+				add = 1
+				if(!is.na(rowLabel)){
+					add = add + 1
+				}
+				if(printRowHeaders){
+					add = add + 1
+				}
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+			}
 		}
 		strVec = c(strVec, "")
 	}
-	if(printRowSeparators) {
-		strVec = c(strVec, line)
-	}
-	strVec = c(strVec, "")
 	
 	#Flag whether row label has been printed
 	rowLabelPrinted = FALSE
@@ -401,16 +479,41 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], data, colSep, sep="")
 			}
 		}
-		if(printRowSeparators) {
-			strVec = c(strVec, line)
+		if(printRowSeparators && (!separateColumnHeadersFromData | (rowIndex < rowLength))) {
+			if(spanRowSeparatorsAcrossAllColumns) {
+				strVec = c(strVec, line)
+			} else {
+				strVec = c(strVec, "")
+				#Determining data columns and manually spanning cmidrule
+				add = 1
+				if(!is.na(rowLabel)){
+					add = add + 1
+				}
+				if(printRowHeaders){
+					add = add + 1
+				}
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+			}
 		}
 		strVec = c(strVec, "")
 	}
 	#Finalize table with rule
 	if(separateColumnHeadersFromData) {
 		strVec = c(strVec, "")
-		#now uses toprule for separation of headers from data - requires booktabs package in LaTeX
-		strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\bottomrule", sep="")
+		if(spanDataHeaderSeparatorAcrossAllColumns) {
+			#uses toprule for separation of headers from data - requires booktabs package in LaTeX
+			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", bottomrule, sep="")
+		} else {
+			#Determining data columns and manually spanning cmidrule
+			add = 1
+			if(!is.na(rowLabel)){
+				add = add + 1
+			}
+			if(printRowHeaders){
+				add = add + 1
+			}
+			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+		}
 	}
 	#Terminate tabular environment
 	strVec = c(strVec, "\\end{tabular}")
