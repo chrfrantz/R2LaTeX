@@ -1,14 +1,16 @@
-# R2LaTeX - Utility file for constructing LaTeX output for R dataframes or matrices 
+# R2LaTeX - Utility file for generating LaTeX output from R data frames or matrices 
 # for direct insertion into LaTeX documents. 
 #
-# Dependency: stringr library (you will be prompted during execution if not installed)
-# 
+# R Dependency: stringr library (you will be prompted during execution if not installed)
+# LaTeX Dependency: booktabs, siunitx (depends on chosen features). 
+#					Compatibility mode avoids the use of any additional package.
+#
 # Usage: 
 # - Copy this file into your R work directory.
-# - Run source("LatexPrinting.R")
-# - Use the printLatexTable() functions (see examples)
+# - Run source("LatexPrinting.R") in R.
+# - Use the printLatexTable() function (see documentation for parameters and examples)
 # 
-# Author: Christopher Frantz
+# Author: Christopher Frantz (christopherfrantz 'at' web 'dot' de)
 # Version 0.01 - June 2015
 ###############################################################################
 
@@ -89,36 +91,37 @@ containsText <- function(val){
 }
 
 
-#' Generates LaTeX tabular or table environment from given R data frame or matrix.
+#' Generates LaTeX tabular or table environment from given R data frame or matrix and saves it into file.
 #' Notes: 
 #' If automatic column formatting is used, the output code will require the 'siunitx' package in LaTeX.
 #' If separateColumnHeadersFromData is activated, the output code will require the 'booktabs' package in LaTeX.
+#' Use compatibilityMode to prevent any external dependencies.
 #' 
 #' @param dataToPrint Data frame or matrix holding data
 #' @param filename = "GenericTableOutput.txt" File the generated output is saved in.
-#' @param printColumnHeaders = TRUE Adds column headers to output. Uses colnames of input data frame
+#' @param printColumnHeaders = TRUE Adds column headers to output. Uses colnames of input data frame.
 #' @param printRowHeaders = FALSE Adds row headers to output. Uses rownames of input data frame.
-#' @param printColumnSeparators = FALSE Indicates if columns should be separated by '|'
+#' @param printColumnSeparators = FALSE Indicates if columns should be separated by '|'.
 #' @param printRowSeparators = FALSE Indicates if rows should be separated by '\hline' or '\midrule'/'\cmidrule'. Consider using the compatibilityMode if relying on row separators.
-#' @param spanRowSeparatorsAcrossAllColumns = FALSE Indicates if row separators (for actual table data entries) are spanned across all columns (using \hline) or only over data columns (using cmidrule). Use with care, since it can cause ugly results. Depends on printRowSeparators.
+#' @param spanRowSeparatorsAcrossAllColumns = FALSE Indicates if row separators (for actual table data entries) are spanned across all columns or only over data columns (using '\crule'/'\cmidrule'). Will not extend to row label column. Depends on printRowSeparators.
 #' @param nonSeparatedColumnHeaders = TRUE Does not print separators between column headers even if activated for columns.
 #' @param separateColumnHeadersFromData = FALSE Indicates if separators should be printed between headers and data (both for row and column headers). Depends on separateColumnHeadersFromData.
-#' @param spanDataHeaderSeparatorAcrossAllColumns = FALSE If set to true, uses toprule that spans across all columns including columns containing row headers and row label
-#' @param separateRowHeadersFromData = FALSE Indicates whether row headers should be separated from data (not recommended since it produces discontinued lines with horizontal separation enabled. Caution: Produces interrupted lines if used with printRowSeparators. You can use \setlength{\extrarowheight}{1pt} from the LaTeX package 'array' to fix that in your preamble.
+#' @param spanDataHeaderSeparatorAcrossAllColumns = FALSE If set to true, uses toprule that spans across all columns including columns containing row headers and row label.
+#' @param separateRowHeadersFromData = FALSE Indicates whether row headers should be separated from data.
 #' @param boldColumnHeaders = TRUE Plots the column headers in bold face.
 #' @param columnLabel = NA Column label that spans across all columns (in addition to column headers).
 #' @param rowLabel = NA Row label that spans across all rows (in addition to row headers).
 #' @param boldColumnAndRowLabel = TRUE Plots the spanning columnLabel and rowLabel in bold face.
 #' @param roundToDecimalPlaces = 3 Decimal places values should be rounded to if numeric (and used for automated decimal point-centered column formatting).
 #' @param fixedLeadingDecimalPlaces = NA Fixes leading decimal places (i.e. before the decimal point) to fixed length for the purpose of automated decimal place-centered column formatting. By default automatically determined from data.
-#' @param determineLeadingDecimalPlacesPerColumn = TRUE Determines leading decimal places for centered formatting per numeric column (instead of global value)
-#' @param determineTrailingDecimalPlacesPerColumn = TRUE Determines trailing decimal places for centered formatting per numeric column (instead of global value)
+#' @param determineLeadingDecimalPlacesPerColumn = TRUE Determines leading decimal places for centered formatting per numeric column (instead of global value for all columns).
+#' @param determineTrailingDecimalPlacesPerColumn = TRUE Determines trailing decimal places for centered formatting per numeric column (instead of global value for all columns).
 #' @param rowHeaderColumnFormat = "c" Column format for row header column (if activated).
 #' @param dataColumnFormat = NA Column format for data entries. If not specified and if data is numeric and continuous, values are aligned by decimal point and column width determined based on largest value.
 #' @param writeFullTableEnv = TRUE Writes complete table environment for immediate paste into LaTeX, otherwise only tabular environment.
 #' @param caption = "Generated Table" Caption for generated table. Requires activation of writeFullTableEnv.
 #' @param label = "tab:generatedTable" LaTeX ref label for generated table. Requires activation of writeFullTableEnv. 
-#' @param compatibilityMode = FALSE Overrides use of features that require additional LaTeX packages (especially data column formatting and separators). Use not recommended, but good for quick output.
+#' @param compatibilityMode = FALSE Overrides use of features that require additional LaTeX packages (especially data column formatting and separators). Affects aesthetics of output.
 #' 
 #' 
 #' @example 
@@ -133,7 +136,7 @@ containsText <- function(val){
 #' attach(mtcars)
 #' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars")
 #' 
-#' #Use to test changes:
+#' #Useful examples to compatibility mode:
 #' 
 #' attach(mtcars)
 #' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, printRowSeparators = TRUE, spanRowSeparatorsAcrossAllColumns = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars", compatibilityMode = FALSE)
@@ -166,7 +169,6 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	bottomrule = "bottomrule"
 	cmidrule = "cmidrule"
 	
-	
 	#Handles compatibility issues
 	if(compatibilityMode) {
 		#Prevents use of booktabs package features
@@ -183,6 +185,10 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		}
 		determineLeadingDecimalPlacesPerColumn = FALSE
 		determineTrailingDecimalPlacesPerColumn = FALSE
+	} else {
+		if(printRowSeparators | separateColumnHeadersFromData) {
+			print("The generated LaTeX table requires the 'booktabs' package. Add \\usepackage{booktabs} to your preamble.")
+		}
 	}
 	
 	#Formatting-related stuff
@@ -217,6 +223,8 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 			vec <- vec[!is.na(vec)]	
 			#Determine column format
 			defaultDataColumn = determineFormat(vec, determineTrailingDecimalPlacesPerColumn, decimalPlaces, !is.na(fixedLeadingDecimalPlaces), fixedLeadingDecimalPlaces)
+			
+			print("The generated LaTeX table requires the 'siunitx' package. Add \\usepackage{siunitx} to your preamble.")
 		}
 	}
 	
@@ -298,10 +306,6 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		}
 	}
 	strVec[length(strVec)] <- paste(strVec[length(strVec)], "}", sep="")
-#	if(printRowSeparators) {
-#		strVec = c(strVec, line)
-#	}
-	
 	strVec = c(strVec, "")
 	
 	if(!is.na(columnLabel)) {
