@@ -133,6 +133,12 @@ containsText <- function(val){
 #' attach(mtcars)
 #' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars")
 #' 
+#' #Use to test changes:
+#' 
+#' attach(mtcars)
+#' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, printRowSeparators = TRUE, spanRowSeparatorsAcrossAllColumns = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars", compatibilityMode = FALSE)
+#' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, printRowSeparators = TRUE, spanRowSeparatorsAcrossAllColumns = FALSE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars", compatibilityMode = TRUE)
+#' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, printRowSeparators = TRUE, spanRowSeparatorsAcrossAllColumns = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars", compatibilityMode = TRUE)
 #' 
 printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", printColumnHeaders = TRUE, printRowHeaders = FALSE, printColumnSeparators = FALSE, printRowSeparators = FALSE, spanRowSeparatorsAcrossAllColumns = FALSE, nonSeparatedColumnHeaders = TRUE, separateColumnHeadersFromData = FALSE, spanDataHeaderSeparatorAcrossAllColumns = FALSE, separateRowHeadersFromData = FALSE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, columnLabel = NA, rowLabel = NA, roundToDecimalPlaces = 3, fixedLeadingDecimalPlaces = NA, determineLeadingDecimalPlacesPerColumn = TRUE, determineTrailingDecimalPlacesPerColumn = TRUE, rowHeaderColumnFormat = "c", dataColumnFormat = NA, writeFullTableEnv = TRUE, caption = "Generated Table", label = "tab:generatedTable", compatibilityMode = FALSE){
 	
@@ -480,20 +486,20 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 			}
 		}
 		if(printRowSeparators && (!separateColumnHeadersFromData | (rowIndex < rowLength))) {
-			if(spanRowSeparatorsAcrossAllColumns) {
-				strVec = c(strVec, line)
-			} else {
-				strVec = c(strVec, "")
-				#Determining data columns and manually spanning cmidrule
-				add = 1
-				if(!is.na(rowLabel)){
-					add = add + 1
-				}
-				if(printRowHeaders){
-					add = add + 1
-				}
-				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - 1 + length(colnames(dataToPrint)), "}", sep="")
+			strVec = c(strVec, "")
+			#Determining data columns and manually spanning cmidrule and considers row label when spanning across all columns
+			add = 1
+			sub = 1
+			if(!is.na(rowLabel)){
+				add = add + 1
 			}
+			if(printRowHeaders & !spanRowSeparatorsAcrossAllColumns){
+				add = add + 1
+			}
+			if(spanRowSeparatorsAcrossAllColumns) {
+				sub = 0
+			}
+			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\", cmidrule, "{", add , "-", add - sub + length(colnames(dataToPrint)), "}", sep="")
 		}
 		strVec = c(strVec, "")
 	}
