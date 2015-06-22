@@ -7,7 +7,7 @@
 # - Copy this file into your R work directory.
 # - Run source("LatexPrinting.R")
 # - Use the printLatexTable() functions (see examples)
-#
+# 
 # Author: Christopher Frantz
 # Version 0.01 - June 2015
 ###############################################################################
@@ -92,7 +92,7 @@ containsText <- function(val){
 #' Generates LaTeX tabular or table environment from given R data frame or matrix.
 #' Notes: 
 #' If automatic column formatting is used, the output code will require the 'siunitx' package in LaTeX.
-#' If separateHeadersFromData is activated, the output code will require the 'booktabs' package in LaTeX.
+#' If separateColumnHeadersFromData is activated, the output code will require the 'booktabs' package in LaTeX.
 #' 
 #' @param dataToPrint Data frame or matrix holding data
 #' @param filename = "GenericTableOutput.txt" File the generated output is saved in.
@@ -100,9 +100,11 @@ containsText <- function(val){
 #' @param printRowHeaders = FALSE Adds row headers to output. Uses rownames of input data frame.
 #' @param printColumnSeparators = FALSE Indicates if columns should be separated by '|'
 #' @param printRowSeparators = FALSE Indicates if rows should be separated by '\hline'
-#' @param NonSeparatedHeaders = TRUE Does not print separators between column headers even if activated for columns.
-#' @param separateHeadersFromData = FALSE Indicates if separators should be printed between headers and data (both for row and column headers).
-#' @param boldColumnHeaders = TRUE Plots the column headers in bold face
+#' @param nonSeparatedColumnHeaders = TRUE Does not print separators between column headers even if activated for columns.
+#' @param separateColumnHeadersFromData = FALSE Indicates if separators should be printed between headers and data (both for row and column headers).
+#' @param separateRowHeadersFromData = FALSE Indicates whether row headers should be separated from data (not recommended since it produces discontinued lines with horizontal separation enabled.
+#' @param boldColumnHeaders = TRUE Plots the column headers in bold face.
+#' @param boldColumnAndRowLabel = TRUE Plots the spanning columnLabel and rowLabel in bold face.
 #' @param columnLabel = NA Column label that spans across all columns (in addition to column headers).
 #' @param rowLabel = NA Row label that spans across all rows (in addition to row headers).
 #' @param roundToDecimalPlaces = 3 Decimal places values should be rounded to if numeric (and used for automated decimal point-centered column formatting).
@@ -112,6 +114,8 @@ containsText <- function(val){
 #' @param rowHeaderColumnFormat = "c" Column format for row header column (if activated).
 #' @param dataColumnFormat = NA Column format for data entries. If not specified and if data is numeric and continuous, values are aligned by decimal point and column width determined based on largest value.
 #' @param writeFullTableEnv = TRUE Writes complete table environment for immediate paste into LaTeX, otherwise only tabular environment.
+#' @param caption = "Generated Table" Caption for generated table. Requires activation of writeFullTableEnv.
+#' @param label = "tab:generatedTable" LaTeX ref label for generated table. Requires activation of writeFullTableEnv. 
 #' 
 #' 
 #' @example 
@@ -124,10 +128,10 @@ containsText <- function(val){
 #' #More complex example:
 #' 
 #' attach(mtcars)
-#' printLatexTable(mtcars, "mtcarsTable.txt", TRUE, TRUE, TRUE, boldColumnHeaders = TRUE, columnLabel = "Attributes", rowLabel = "Car Models")
+#' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars")
 #' 
 #' 
-printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", printColumnHeaders = TRUE, printRowHeaders = FALSE, printColumnSeparators = FALSE, printRowSeparators = FALSE, NonSeparatedHeaders = TRUE, separateHeadersFromData = FALSE, boldColumnHeaders = TRUE, columnLabel = NA, rowLabel = NA, roundToDecimalPlaces = 3, fixedLeadingDecimalPlaces = NA, determineLeadingDecimalPlacesPerColumn = TRUE, determineTrailingDecimalPlacesPerColumn = TRUE, rowHeaderColumnFormat = "c", dataColumnFormat = NA, writeFullTableEnv = TRUE){
+printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", printColumnHeaders = TRUE, printRowHeaders = FALSE, printColumnSeparators = FALSE, printRowSeparators = FALSE, nonSeparatedColumnHeaders = TRUE, separateColumnHeadersFromData = FALSE, separateRowHeadersFromData = FALSE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, columnLabel = NA, rowLabel = NA, roundToDecimalPlaces = 3, fixedLeadingDecimalPlaces = NA, determineLeadingDecimalPlacesPerColumn = TRUE, determineTrailingDecimalPlacesPerColumn = TRUE, rowHeaderColumnFormat = "c", dataColumnFormat = NA, writeFullTableEnv = TRUE, caption = "Generated Table", label = "tab:generatedTable"){
 	
 	if(is.null(dataToPrint)) {
 		stop("Passed data is null.")
@@ -199,11 +203,9 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	if(writeFullTableEnv) {
 		#Write table environment
 		strVec = c(strVec, "\\begin{table}[h!]")
-		strVec = c(strVec, "")
-		strVec = c(strVec, "\\caption{Table}")
-		strVec = c(strVec, "")
-		strVec = c(strVec, "\\label{tab:GeneratedTable}")
-		strVec = c(strVec, "")
+		strVec = c(strVec, paste("\\caption{", caption, "}", sep=""))
+		strVec = c(strVec, paste("\\label{", label, "}", sep=""))
+		strVec = c(strVec, paste("\\centering", sep=""))
 	}
 	#Writing table column specifications
 	strVec = c(strVec, "\\begin{tabular}{")
@@ -212,7 +214,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	}
 	#Add additional column for row label
 	if(!is.na(rowLabel)) {
-		if(printColumnSeparators) {
+		if(printColumnSeparators | separateRowHeadersFromData) {
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], "c", "|", sep="")
 		} else {
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], "c", " ", sep="")
@@ -221,7 +223,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	#Add additional column format if rowname printing is activated
 	if(printRowHeaders) {
 		#Consider separation of header and data
-		if(printColumnSeparators | separateHeadersFromData){
+		if(printColumnSeparators | separateRowHeadersFromData){
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], defaultRowHeaderColumn, "|", sep="")
 		} else {
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], defaultRowHeaderColumn, " ", sep="")
@@ -256,28 +258,26 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		strVec = c(strVec, line)
 	}
 	
-	#Print toprule if data is to be separated from headers
-	if(separateHeadersFromData) {
-		strVec = c(strVec, "")
-		strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\toprule", sep="")
-	}
-	
 	strVec = c(strVec, "")
 	
 	if(!is.na(columnLabel)) {
 		#Add column for row label
-		if(NonSeparatedHeaders) {
+		if(nonSeparatedColumnHeaders) {
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
 		} else {
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
 		}
 		#Add additional empty header column if rowname printing is activated
 		if(printRowHeaders) {
-			if(NonSeparatedHeaders) {
+			if(nonSeparatedColumnHeaders) {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
 			} else {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
 			}
+		}
+		#bold label
+		if(boldColumnAndRowLabel) {
+			columnLabel = paste("\\textbf{", columnLabel, "}", sep="")
 		}
 		strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{", length(colnames(dataToPrint)), "}{c}{", columnLabel, "}", sep="")
 		strVec = c(strVec, rowSep)
@@ -286,9 +286,16 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	
 	if(printColumnHeaders == TRUE && !is.null(colnames(dataToPrint))) {
 		
+		#Print toprule if data is to be separated from headers
+		if(separateColumnHeadersFromData) {
+			strVec = c(strVec, "")
+			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\toprule", sep="")
+			strVec = c(strVec, "")
+		}
+		
 		#Add column for row label if specified
 		if(!is.na(rowLabel)) {
-			if(NonSeparatedHeaders) {
+			if(nonSeparatedColumnHeaders) {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
 			} else {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
@@ -297,7 +304,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		
 		#Add additional empty header column if rowname printing is activated
 		if(printRowHeaders) {
-			if(NonSeparatedHeaders) {
+			if(nonSeparatedColumnHeaders) {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
 			} else {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
@@ -315,14 +322,14 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 			}
 			if(headerIndex == length(colnames(dataToPrint))) {
 				#leave out separator
-				if(NonSeparatedHeaders) {
+				if(nonSeparatedColumnHeaders) {
 					strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{", headerValue, "}", rowSep, sep="")
 				} else {
 					strVec[length(strVec)] <- paste(strVec[length(strVec)], headerValue, rowSep, sep="")
 				}
 			} else {
 				#add separator
-				if(NonSeparatedHeaders){
+				if(nonSeparatedColumnHeaders){
 					strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{", headerValue, "}", colSep, sep="")
 				} else {
 					strVec[length(strVec)] <- paste(strVec[length(strVec)], headerValue, colSep, sep="")
@@ -331,7 +338,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 			strVec[length(strVec)] = gsub("_", " ", strVec[length(strVec)])
 		}
 		
-		if(separateHeadersFromData) {
+		if(separateColumnHeadersFromData) {
 			strVec = c(strVec, "")
 			#now uses toprule for separation of headers from data - requires booktabs package in LaTeX
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\toprule", sep="")
@@ -364,6 +371,9 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		if(!is.na(rowLabel)){
 			if(rowIndex == 1 && !rowLabelPrinted) {
 				#Write label to first row
+				if(boldColumnAndRowLabel) {
+					rowLabel = paste("\\textbf{", rowLabel, "}", sep="")
+				}
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\parbox[t]{2mm}{\\multirow{", length(rownames(dataToPrint)), "}{*}{\\rotatebox[origin=c]{90}{", rowLabel, "}}}", colSep, sep="")
 				rowLabelPrinted = TRUE
 			} else {
@@ -396,11 +406,16 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		}
 		strVec = c(strVec, "")
 	}
+	#Finalize table with rule
+	if(separateColumnHeadersFromData) {
+		strVec = c(strVec, "")
+		#now uses toprule for separation of headers from data - requires booktabs package in LaTeX
+		strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\bottomrule", sep="")
+	}
 	#Terminate tabular environment
 	strVec = c(strVec, "\\end{tabular}")
 	if(writeFullTableEnv) {
 		#Write table environment
-		strVec = c(strVec, "")
 		strVec = c(strVec, "\\end{table}")
 	}
 	#Write String to file
