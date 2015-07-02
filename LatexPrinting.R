@@ -136,7 +136,7 @@ containsText <- function(val){
 #' attach(mtcars)
 #' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars")
 #' 
-#' #Useful examples to compatibility mode:
+#' #Useful examples to test compatibility mode:
 #' 
 #' attach(mtcars)
 #' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, printRowSeparators = TRUE, spanRowSeparatorsAcrossAllColumns = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars", compatibilityMode = FALSE)
