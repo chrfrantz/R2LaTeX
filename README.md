@@ -14,5 +14,18 @@ Script that facilitates exporting data from R to LaTeX
  * Usage:
   1. Copy file into R working directory.
   2. Execute it (e.g. `source("LatexPrinting.R")`)
-  3. Use `printLatexTable()` to print R data frame or matrix. See documentation for examples.
+  3. Use `printLatexTable()` to print R data frame or matrix. See documentation for details and examples.
+
+##### Examples:
   
+1.) Simple Example
+```
+m <- matrix(rexp(100), 10)
+printLatexTable(m)
+```
+ 
+2.) More Complex Example
+```
+attach(mtcars)
+printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars")
+```
