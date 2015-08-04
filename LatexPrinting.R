@@ -187,7 +187,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		determineTrailingDecimalPlacesPerColumn = FALSE
 	} else {
 		if(printRowSeparators | separateColumnHeadersFromData) {
-			print("The generated LaTeX table requires the 'booktabs' package. Add \\usepackage{booktabs} to your preamble.")
+			cat("The generated LaTeX table requires the 'booktabs' package. Add \\usepackage{booktabs} to your preamble.\n")
 		}
 	}
 	
@@ -224,7 +224,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 			#Determine column format
 			defaultDataColumn = determineFormat(vec, determineTrailingDecimalPlacesPerColumn, decimalPlaces, !is.na(fixedLeadingDecimalPlaces), fixedLeadingDecimalPlaces)
 			
-			print("The generated LaTeX table requires the 'siunitx' package. Add \\usepackage{siunitx} to your preamble.")
+			cat("The generated LaTeX table requires the 'siunitx' package. Add \\usepackage{siunitx} to your preamble.\n")
 		}
 	}
 	
