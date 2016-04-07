@@ -164,10 +164,13 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	
 	#Explicitly declare default data column
 	defaultDataColumn = NA
+	#Column specification for text
+	defaultTextDataColumn = "c"
 	
 	#Override format choice if provided by user
 	if(!is.na(dataColumnFormat)) {
 		defaultDataColumn = dataColumnFormat
+		defaultTextDataColumn = dataColumnFormat
 	}
 	
 	colSep = " & "
@@ -204,9 +207,6 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	if(!is.na(roundToDecimalPlaces)) {
 		decimalPlaces = roundToDecimalPlaces
 	}
-	
-	#Column specification for text
-	defaultTextDataColumn = "c"
 	
 	#Test which columns hold numbers in order to figure out if it makes sense to perform decimal place-based centering
 	colsWithNumbers <- apply(dataToPrint, 2, function(x){!containsText(x)})
@@ -319,14 +319,14 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	if(!is.na(columnLabel)) {
 		#Add column for row label
 		if(nonSeparatedColumnHeaders) {
-			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
+			strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{", defaultDataColumn, "}{ }", colSep, sep="")
 		} else {
 			strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
 		}
 		#Add additional empty header column if rowname printing is activated
 		if(printRowHeaders) {
 			if(nonSeparatedColumnHeaders) {
-				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{", defaultDataColumn, "}{ }", colSep, sep="")
 			} else {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
 			}
@@ -335,7 +335,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		if(boldColumnAndRowLabel) {
 			columnLabel = paste("\\textbf{", columnLabel, "}", sep="")
 		}
-		strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{", length(colnames(dataToPrint)), "}{c}{", columnLabel, "}", sep="")
+		strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{", length(colnames(dataToPrint)), "}{", defaultDataColumn, "}{", columnLabel, "}", sep="")
 		strVec = c(strVec, rowSep)
 		strVec = c(strVec, "")
 	}
@@ -364,7 +364,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		#Add column for row label if specified
 		if(!is.na(rowLabel)) {
 			if(nonSeparatedColumnHeaders) {
-				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{", defaultDataColumn, "}{ }", colSep, sep="")
 			} else {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
 			}
@@ -373,7 +373,7 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 		#Add additional empty header column if rowname printing is activated
 		if(printRowHeaders) {
 			if(nonSeparatedColumnHeaders) {
-				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{ }", colSep, sep="")
+				strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{", defaultDataColumn, "}{ }", colSep, sep="")
 			} else {
 				strVec[length(strVec)] <- paste(strVec[length(strVec)], " ", colSep, sep="")
 			}
@@ -395,14 +395,14 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 			if(headerIndex == length(colnames(dataToPrint))) {
 				#leave out separator
 				if(nonSeparatedColumnHeaders) {
-					strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{", headerValue, "}", rowSep, sep="")
+					strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{", defaultDataColumn, "}{", headerValue, "}", rowSep, sep="")
 				} else {
 					strVec[length(strVec)] <- paste(strVec[length(strVec)], headerValue, rowSep, sep="")
 				}
 			} else {
 				#add separator
 				if(nonSeparatedColumnHeaders){
-					strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{c}{", headerValue, "}", colSep, sep="")
+					strVec[length(strVec)] <- paste(strVec[length(strVec)], "\\multicolumn{1}{", defaultDataColumn, "}{", headerValue, "}", colSep, sep="")
 				} else {
 					strVec[length(strVec)] <- paste(strVec[length(strVec)], headerValue, colSep, sep="")
 				}
