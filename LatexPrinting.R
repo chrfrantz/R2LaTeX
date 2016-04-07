@@ -107,6 +107,7 @@ containsText <- function(val){
 #' @param dataToPrint Data frame or matrix holding data
 #' @param filename = "GenericTableOutput.txt" File the generated output is saved in.
 #' @param printColumnHeaders = TRUE Adds column headers to output. Uses colnames of input data frame.
+#' @param replaceColumnHeaderFullStopsWithWhitespace = TRUE Replaces '.'s in column headers with whitespace.
 #' @param printRowHeaders = FALSE Adds row headers to output. Uses rownames of input data frame.
 #' @param printColumnSeparators = FALSE Indicates if columns should be separated by '|'.
 #' @param printRowSeparators = FALSE Indicates if rows should be separated by '\hline' or '\midrule'/'\cmidrule'. Consider using the compatibilityMode if relying on row separators.
@@ -150,7 +151,7 @@ containsText <- function(val){
 #' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, printRowSeparators = TRUE, spanRowSeparatorsAcrossAllColumns = FALSE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars", compatibilityMode = TRUE)
 #' printLatexTable(mtcars, "mtcarsTable.txt", printColumnHeaders = TRUE, printRowHeaders = TRUE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, separateColumnHeadersFromData = TRUE, separateRowHeadersFromData = TRUE, printRowSeparators = TRUE, spanRowSeparatorsAcrossAllColumns = TRUE, columnLabel = "Attributes", rowLabel = "Car Models", caption = "Car Models with Attributes", label = "tab:cars", compatibilityMode = TRUE)
 #' 
-printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", printColumnHeaders = TRUE, printRowHeaders = FALSE, printColumnSeparators = FALSE, printRowSeparators = FALSE, spanRowSeparatorsAcrossAllColumns = FALSE, nonSeparatedColumnHeaders = TRUE, separateColumnHeadersFromData = FALSE, spanDataHeaderSeparatorAcrossAllColumns = FALSE, separateRowHeadersFromData = FALSE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, columnLabel = NA, rowLabel = NA, roundToDecimalPlaces = 3, fixedLeadingDecimalPlaces = NA, determineLeadingDecimalPlacesPerColumn = TRUE, determineTrailingDecimalPlacesPerColumn = TRUE, rowHeaderColumnFormat = "c", dataColumnFormat = NA, writeFullTableEnv = TRUE, caption = "Generated Table", label = "tab:generatedTable", compatibilityMode = FALSE){
+printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", printColumnHeaders = TRUE, replaceColumnHeaderFullStopsWithWhitespace = TRUE, printRowHeaders = FALSE, printColumnSeparators = FALSE, printRowSeparators = FALSE, spanRowSeparatorsAcrossAllColumns = FALSE, nonSeparatedColumnHeaders = TRUE, separateColumnHeadersFromData = FALSE, spanDataHeaderSeparatorAcrossAllColumns = FALSE, separateRowHeadersFromData = FALSE, boldColumnHeaders = TRUE, boldColumnAndRowLabel = TRUE, columnLabel = NA, rowLabel = NA, roundToDecimalPlaces = 3, fixedLeadingDecimalPlaces = NA, determineLeadingDecimalPlacesPerColumn = TRUE, determineTrailingDecimalPlacesPerColumn = TRUE, rowHeaderColumnFormat = "c", dataColumnFormat = NA, writeFullTableEnv = TRUE, caption = "Generated Table", label = "tab:generatedTable", compatibilityMode = FALSE){
 	
 	if(is.null(dataToPrint)) {
 		stop("Passed data is null.")
@@ -386,6 +387,10 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 			} else {
 				#Leave column headers in plain text
 				headerValue <- colnames(dataToPrint)[headerIndex]
+			}
+			if(replaceColumnHeaderFullStopsWithWhitespace){
+				#Replacing column header .'s with white space
+				headerValue = str_replace_all(headerValue, "\\.", " ")
 			}
 			if(headerIndex == length(colnames(dataToPrint))) {
 				#leave out separator
