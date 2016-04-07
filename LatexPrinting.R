@@ -66,13 +66,20 @@ determineFormat <- function(arrayOfValues, determineDecimalPlaces = TRUE, defaul
 	} else {
 		decimalPlaces = defaultDecimalPlaces
 	}
-	#Check on leading decimal places
-	pos = str_locate(as.character(max(arrayOfValues)), "\\.")
-	if(is.na(pos[1])){
-		#no decimal places
-		plc = nchar(as.character(max(arrayOfValues)))
+	
+	if(length(arrayOfValues) == 0){
+		print("Attempted to determine format of empty array (should never happen). Switching to default format.")
+		#Override check if input array is empty
+		fixedLeadingPlaces = TRUE
 	} else {
-		plc = pos[1] - 1
+		#Check on leading decimal places
+		pos = str_locate(as.character(max(arrayOfValues)), "\\.")
+		if(is.na(pos[1])){
+			#no decimal places
+			plc = nchar(as.character(max(arrayOfValues)))
+		} else {
+			plc = pos[1] - 1
+		}
 	}
 	if(fixedLeadingPlaces){
 		plc = defaultLeadingPlaces
@@ -202,10 +209,10 @@ printLatexTable <- function(dataToPrint, filename = "GenericTableOutput.txt", pr
 	
 	#Test which columns hold numbers in order to figure out if it makes sense to perform decimal place-based centering
 	colsWithNumbers <- apply(dataToPrint, 2, function(x){!containsText(x)})
-
+	
 	if(is.na(defaultDataColumn)) {
 		#Only determine format if no default specified
-		if(length(colsWithNumbers) == 0) {
+		if(sum(colsWithNumbers == TRUE) == 0) {
 			#Alignment only works for numeric columns
 			defaultDataColumn = "c"
 			print("No numeric columns")
